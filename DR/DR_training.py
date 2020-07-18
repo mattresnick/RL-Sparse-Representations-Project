@@ -76,7 +76,7 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
         
         # Step control.
         for st in range(step_num):
-            env.render()
+            #env.render()
             
             # Take an action and add noise (OU, Normal, or No).
             action = np.clip(ActorObj.net(state).numpy() + \
@@ -166,7 +166,7 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
 
 # Prepare simulation environment and store pertinent information.
 env_names = ['Pendulum-v0', 'HalfCheetahBulletEnv-v0','MountainCarContinuous-v0']
-env = gym.make(env_names[2])
+env = gym.make(env_names[0])
 env.seed(4444)
 #env.render()
 env.reset()
