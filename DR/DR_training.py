@@ -125,10 +125,10 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
                 # Optimize actor parameters by maximizing average critic value.
                 actor_vars = ActorObj.net.trainable_variables
                 actor_grads = tape2.gradient(loss_a, actor_vars)
-                '''
+                
                 for i, act_output in enumerate(ActorObj.net.store_activation):
                     actor_grads[i+1] += DRS.exp_distributional_regularizer(act_output, grad=True)
-                '''
+                
                 ActorObj.opt.apply_gradients(zip(actor_grads, actor_vars))
                 
             
@@ -146,11 +146,6 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
         print ('Episode #' + str(ep+1) + '. Reward: ' + str(R_e))
         #print ('Actor Loss: ' + str(loss_store[-1][0]) + '. Critic Loss: ' + str(loss_store[-1][1]))
         
-        '''
-        params = []
-        for i, l in enumerate(ActorObj.dense_layers):
-            params.extend(ActorObj.dense_layers[i].weights[0].numpy().flatten())
-        '''
         outputs = []
         for i, l in enumerate(ActorObj.net.store_activation):
             outputs.extend(l.flatten())
