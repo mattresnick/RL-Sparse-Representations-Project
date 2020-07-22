@@ -29,8 +29,6 @@ if __name__=="__main__":
                'action_scale':action_max,
                'tau':1e-3} 
     
-    
-    
     actor_dict = {'layer_sizes':[480,360],
                   'activation':'channelout',
                   'pool_size':2,
@@ -43,7 +41,23 @@ if __name__=="__main__":
     
     # Create actor and critic objects based on environment information.
     ActorObj = ActorCritic(actor_type=True,**ac_dict, lr=1e-3, **actor_dict)
-    CriticObj = ActorCritic(actor_type=False,**ac_dict, lr=1e-3, cpack=CPACK)
+    
+    # Critic object has a simpler version if not using PackNet on it. 
+    # Which is only needed for multi-task PackNet.
+    if not CPACK:
+        CriticObj = ActorCritic(actor_type=False,**ac_dict, lr=1e-3, cpack=CPACK)
+    else:
+        critic_dict = {'layer_sizes':[480,360],
+                  'activation':'channelout',
+                  'pool_size':2,
+                  'dropout_rate':0.3,
+                  'use_bn':False,
+                  'use_do':False,
+                  'DR':DR,
+                  'total_tasks':len(env_names),
+                  'cpack':CPACK}
+        
+        CriticObj = ActorCritic(actor_type=False,**ac_dict, lr=1e-3, **critic_dict)
     
     
     Total_R_e_list = []
