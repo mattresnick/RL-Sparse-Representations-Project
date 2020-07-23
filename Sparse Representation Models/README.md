@@ -11,8 +11,8 @@ form).
 
 Some files are not as self explanatory, but I tried to keep the documentation as thorough as I could, and I will otherwise do my
 best to explain everything in a general sense here. If there's any question as to how to run something or how a particular piece of
-the code works, feel free to contact me (Matt). I tried to keep the additional libraries to a minimum, so the environment we made
-for homework 0 should be sufficient except "tensorflow_addons" is required for Maxout. I believe that's the only additional
+the code works in this folder, feel free to contact me (Matt). I tried to keep the additional libraries to a minimum, so the environment 
+we made for homework 0 should be sufficient except "tensorflow_addons" is required for Maxout. I believe that's the only additional
 dependency.
 
 
