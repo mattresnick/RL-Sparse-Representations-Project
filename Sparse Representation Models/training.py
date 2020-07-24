@@ -5,7 +5,6 @@ import numpy as np
 import gym
 import pybullet_envs
 from ReplayBuffer import IndividualBuffers, makeOUNoise
-from ActorCriticDR import ActorCritic
 import matplotlib.pyplot as plt
 import DistributionalRegularizers as DRS
 from math import floor
@@ -16,7 +15,11 @@ from time import time
 
 
 def zero_calculus(outputs, all_nonzero_locs):
-    
+    '''
+    Get information about the number of zeros in output, the percent of output 
+    that this number makes up, and the number of unique nonzero activations over the
+    whole training run. 
+    '''
     # True where activations are zero.
     zero_bool_array = np.array(outputs).flatten()==np.repeat(0,len(outputs))
     
@@ -40,15 +43,23 @@ def zero_calculus(outputs, all_nonzero_locs):
 
 
 def gradientMasks(ActorCriticObj):
+    '''
+    Create a mask for each gradient layer, with zeros at the locations
+    of "frozen" values, in orer to effectively freeze them from training.
+    '''
+    
     grad_shapes = ActorCriticObj.dense_layer_sizes
     masks = []
     for m,mgrad in enumerate(grad_shapes):
+        
+        # Get the location by i=layer number, j=parameter type (weights or biases)
         i = int(floor(m/2))
         j = m%2
         
         # Check for the case of a single-valued layer.
         if len(ActorCriticObj.frozen_inds[i][j])>0:
             
+            # Use the frozen indices to set values in a ones array to zero.
             mask = np.ones(mgrad)
             index_list = [list(h.numpy()) for h in ActorCriticObj.frozen_inds[i][j]]
             
@@ -82,11 +93,20 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
         - batch_size (Integer): Number of experiences to sample from replay buffer
           every training step.
         - gamma (Float): Temporal discount scale factor, 0 <= gamma <1.
+        - envmt (Gym Environment Object): The environment from which to obtain 
+          observations.
+        - task (Integer): Current task number.
+        - PACK (Boolean): Flag variable, if True, PackNet code is used.
+        - CPACK (Boolean): Flag variable, if True, PackNet code is used for the 
+          critic.
+        - DR (Boolean): Flag variable, if True, Distributional Regularizer code 
+          is used.
     
     Returns:
         - reward_store (list): Reward total for each episode.
         - ActorObj (ActorCritic object): Trained actor model.
         - CriticObj (ActorCritic object): Trained critic model.
+        - zero_store (list): Percent zero activations for each episode.
     '''
     
     
@@ -164,11 +184,16 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
                 actor_vars = ActorObj.net.trainable_variables
                 
                 '''
+                # One way of doing DR, add to loss, but there's an issue somewhere.
                 if DR:
                     for penalty in ActorObj.net.store_DR_reg_terms:
                         loss_a += penalty
                 '''
                 actor_grads = tape2.gradient(loss_a, actor_vars)
+                
+                if DR:
+                    for i, act_output in enumerate(ActorObj.net.store_activation):
+                        actor_grads[i+1] += DRS.exp_distributional_regularizer(act_output, grad=True)
                 
                 if PACK:
                     # Apply masks to gradients, effectively freezing parameters.
@@ -214,6 +239,11 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
 
 
 def testing(ActorObj,envmt,state_dim,model_name,name):
+    '''
+    Runs the given environment for 100 episodes using the given actor
+    and produces plots of the results, in addition to writing the results 
+    to file.
+    '''
     reward_store, roll_avg_rew = [], []
     num_eps = 100
     for ep in range(num_eps):
