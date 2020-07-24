@@ -1,10 +1,9 @@
 import os
 os.environ['HDF5_DISABLE_VERSION_CHECK']='2'
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, Concatenate, BatchNormalization, Dropout, ReLU
+import tensorflow.keras.layers as tfl
 from CustomActivations import Channelout, ChanneloutWinnerT, SELULayer
 from tensorflow_addons.layers import Maxout
-from SpecDropout import SpecDropout, SpecAlphaDropout
 import numpy as np
 import DistributionalRegularizers as DRS
 
@@ -135,20 +134,20 @@ class ActorCritic():
         
         size_mult = 1.0
         
-        state = Input(shape=(self.state_shape))
-        action = Input(shape=(self.action_shape))
+        state = tfl.Input(shape=(self.state_shape))
+        action = tfl.Input(shape=(self.action_shape))
         
-        state_layers = Dense(int(400*size_mult),activation='relu')(state)
-        state_layers = BatchNormalization()(state_layers)
-        state_layers = Dense(int(300*size_mult),activation='relu')(state_layers)
-        state_layers = BatchNormalization()(state_layers)
+        state_layers = tfl.Dense(int(400*size_mult),activation='relu')(state)
+        state_layers = tfl.BatchNormalization()(state_layers)
+        state_layers = tfl.Dense(int(300*size_mult),activation='relu')(state_layers)
+        state_layers = tfl.BatchNormalization()(state_layers)
         
-        action_layers = Dense(int(300*size_mult),activation='relu')(action)
-        action_layers = BatchNormalization()(action_layers)
+        action_layers = tfl.Dense(int(300*size_mult),activation='relu')(action)
+        action_layers = tfl.BatchNormalization()(action_layers)
         
-        layer_merge = Concatenate()([state_layers, action_layers])
-        layer_merge = Dense(int(300*size_mult),activation='relu',kernel_regularizer='l2')(layer_merge)
-        out_layer = Dense(1, kernel_initializer=self.f_layer_init)(layer_merge)
+        layer_merge = tfl.Concatenate()([state_layers, action_layers])
+        layer_merge = tfl.Dense(int(300*size_mult),activation='relu',kernel_regularizer='l2')(layer_merge)
+        out_layer = tfl.Dense(1, kernel_initializer=self.f_layer_init)(layer_merge)
         
         return tf.keras.Model([state, action], out_layer)
     
@@ -320,17 +319,17 @@ class ActorModel(tf.keras.Model):
         self.dropout_layers = self.getDropoutLayers(activation,dropout_rate)
         self.activation_layers = self.getActivationLayers(activation,pool_size)
         
-        #DR
-        if False:
+        
+        if DR:
             self.dense_layers = []
             for h_nodes in layer_sizes:
                 he_init=tf.random_normal_initializer(mean=0.0,stddev=2/h_nodes)
-                self.dense_layers.append(Dense(h_nodes,kernel_initializer=he_init))
+                self.dense_layers.append(tfl.Dense(h_nodes,kernel_initializer=he_init))
         else:
-            self.dense_layers = [Dense(h_nodes) for h_nodes in self.layer_sizes]
+            self.dense_layers = [tfl.Dense(h_nodes) for h_nodes in self.layer_sizes]
             
         f_layer_init = tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3)
-        self.dense_layers.append(Dense(action_shape, activation='tanh',
+        self.dense_layers.append(tfl.Dense(action_shape, activation='tanh',
                 kernel_initializer=f_layer_init))
         
     def getActivationLayers(self,activation,pool_size):
@@ -344,15 +343,15 @@ class ActorModel(tf.keras.Model):
         elif activation=='selu':
             activation_layers = [SELULayer() for i in range(self.num_layers)]
         else:
-            activation_layers = [ReLU() for i in range(self.num_layers)]
+            activation_layers = [tfl.ReLU() for i in range(self.num_layers)]
         
         return activation_layers
     
     def getDropoutLayers(self,activation,dropout_rate):
         if activation=='selu':
-            dropout_layers = [SpecAlphaDropout(dropout_rate) for i in range(self.num_layers)]
+            dropout_layers = [tfl.AlphaDropout(dropout_rate) for i in range(self.num_layers)]
         else:
-            dropout_layers = [SpecDropout(dropout_rate) for i in range(self.num_layers)]
+            dropout_layers = [tfl.Dropout(dropout_rate) for i in range(self.num_layers)]
             
         return dropout_layers
     
@@ -384,7 +383,7 @@ class ActorModel(tf.keras.Model):
                 else: actor_layers = self.activation_layers[i](actor_layers, self.t)
                 
                 # Apply batchnorm/dropout if applicable
-                if self.use_bn: actor_layers = BatchNormalization()(actor_layers)
+                if self.use_bn: actor_layers = tfl.BatchNormalization()(actor_layers)
                 if self.use_do and training: actor_layers = self.dropout_layers[i](actor_layers)
                 
                 # Save activation for DR if applicable
@@ -433,14 +432,14 @@ class CriticModel(ActorModel):
             self.dense_layers = []
             for h_nodes in h_node_list[:-1]:
                 he_init=tf.random_normal_initializer(mean=0.0,stddev=2/h_nodes)
-                self.dense_layers.append(Dense(h_nodes,kernel_initializer=he_init))
+                self.dense_layers.append(tfl.Dense(h_nodes,kernel_initializer=he_init))
         else:
-            self.dense_layers = [Dense(h_nodes) for h_nodes in h_node_list[:-1]]
+            self.dense_layers = [tfl.Dense(h_nodes) for h_nodes in h_node_list[:-1]]
             
         f_layer_init = tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3)
-        self.dense_layers.append(Dense(1, kernel_initializer=f_layer_init))
+        self.dense_layers.append(tfl.Dense(1, kernel_initializer=f_layer_init))
         
-        self.concat_layer = Concatenate()
+        self.concat_layer = tfl.Concatenate()
     
     
     def call(self, inputs, training=False):
@@ -469,23 +468,11 @@ class CriticModel(ActorModel):
         else: f_layer = self.activation_layers[entry_point](f_layer, self.t)
         
         # Apply batchnorm/dropout if applicable
-        if self.use_bn: f_layer = BatchNormalization()(f_layer)
+        if self.use_bn: f_layer = tfl.BatchNormalization()(f_layer)
         if self.use_do and training: f_layer = self.dropout_layers[entry_point](f_layer)
         
         # Save activation for DR if applicable
         self.store_activation[entry_point] = f_layer.numpy()
         
         return f_layer
-
-
-
-
-
-
-
-
-
-
-
-
 
