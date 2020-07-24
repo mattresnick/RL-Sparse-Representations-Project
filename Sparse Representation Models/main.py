@@ -9,13 +9,16 @@ from training import train, testing
 
 if __name__=="__main__":
     
+    
+    activation_name='relu'
+    save_name='PackNet_TESTS'
+    
     DR = False # Turn Distributional Regularizers on and off.
     PACK = False # Turn PackNet on and off.
     CPACK = False # Turn PackNet on and off for critic net specifically.
     
-    # Obtain pertinent environment information.
-    #env_names = ['Pendulum-v0', 'Pendulum-v0', 'Pendulum-v0']
-    env_names = ['HalfCheetahBulletEnv-v0','HalfCheetahBulletEnv-v0']
+    # Obtain pertinent environment information. 
+    env_names = ['HalfCheetahBulletEnv-v0']
     seeds = [4444, 5021, 1580]
     
     env = gym.make(env_names[0])
@@ -30,11 +33,11 @@ if __name__=="__main__":
                'tau':1e-3} 
     
     actor_dict = {'layer_sizes':[480,360],
-                  'activation':'channelout',
+                  'activation':activation_name,
                   'pool_size':2,
                   'dropout_rate':0.3,
                   'use_bn':False,
-                  'use_do':False,
+                  'use_do':True,
                   'DR':DR,
                   'total_tasks':len(env_names),
                   'cpack':False}
@@ -48,7 +51,7 @@ if __name__=="__main__":
         CriticObj = ActorCritic(actor_type=False,**ac_dict, lr=1e-3, cpack=CPACK)
     else:
         critic_dict = {'layer_sizes':[480,360],
-                  'activation':'channelout',
+                  'activation':activation_name,
                   'pool_size':2,
                   'dropout_rate':0.3,
                   'use_bn':False,
@@ -116,11 +119,9 @@ if __name__=="__main__":
         plt.ylabel('Pct Zero Activations')
         plt.show()
         '''
+            
         
-        
-    
-    
-    model_name = 'Baseline_Channelout_2seedcheetah'
+    model_name = save_name+'_'+activation_name
     
     #TrainedActorObj.net.save_weights('./saved_models/'+model_name+'_actor')
     #TrainedCriticObj.net.save_weights('./saved_models/'+model_name+'_critic')
@@ -138,21 +139,9 @@ if __name__=="__main__":
         for r in R_e:
             rew_str = rew_str+str(r)+'\n'
         rew_str = rew_str[:-1]
-        with open('./reward_results/'+model_name+'.txt','a') as write_file:
+        with open('./results/'+model_name+'.txt','a') as write_file:
             write_file.write(rew_str)
     
     
     testing(ActorObj,env,state_dim,model_name,'new_seed')
-    
-    ActorObj.setTask(0)
-    env.seed(seeds[0])
-    testing(ActorObj,env,state_dim,model_name,'first_seed')
-    
-    ActorObj.setTask(1)
-    env.seed(seeds[1])
-    testing(ActorObj,env,state_dim,model_name,'second_seed')
-    
-    
-
-    
     
