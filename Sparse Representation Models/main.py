@@ -16,7 +16,7 @@ if __name__=="__main__":
     DR = False # Turn Distributional Regularizers on and off.
     PACK = False # Turn PackNet on and off.
     CPACK = False # Turn PackNet on and off for critic net specifically.
-    USE_PER = False # Prioritized Experience Replay buffer
+    USE_PER = True # Prioritized Experience Replay buffer
 
     # Obtain pertinent environment information.
     env_names = ['Pendulum-v0']
@@ -40,7 +40,7 @@ if __name__=="__main__":
     actor_dict = {'layer_sizes':[480,360],
                   'activation':activation_name,
                   'pool_size':2,
-                  'dropout_rate':0.0,  # <--- 0.3
+                  'dropout_rate':0.0,  # <--- 0.5
                   'use_bn':False,
                   'use_do':True,
                   'DR':DR,
