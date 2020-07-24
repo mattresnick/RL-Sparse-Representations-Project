@@ -42,9 +42,8 @@ class PER(object):
         ----------
         experience: tuple
             An experience from the environment
-        '''
-        max_priority = np.max(
-            self._segtree.tree[-self._segtree.capacity:])
+        ''' 
+        max_priority = np.max(self._segtree.tree[-self._segtree.capacity:])
 
         if max_priority == 0:
             max_priority = self._absolute_error_upper

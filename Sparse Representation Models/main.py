@@ -16,6 +16,11 @@ if __name__=="__main__":
     DR = False # Turn Distributional Regularizers on and off.
     PACK = False # Turn PackNet on and off.
     CPACK = False # Turn PackNet on and off for critic net specifically.
+    USE_PER = True # Prioritized Experience Replay buffer
+
+    # Obtain pertinent environment information.
+    env_names = ['Pendulum-v0', 'Pendulum-v0', 'Pendulum-v0']
+    # env_names = ['HalfCheetahBulletEnv-v0','HalfCheetahBulletEnv-v0']
     
     # Obtain pertinent environment information. 
     env_names = ['HalfCheetahBulletEnv-v0']
@@ -35,7 +40,7 @@ if __name__=="__main__":
     actor_dict = {'layer_sizes':[480,360],
                   'activation':activation_name,
                   'pool_size':2,
-                  'dropout_rate':0.3,
+                  'dropout_rate':0.0,  # <--- 0.3
                   'use_bn':False,
                   'use_do':True,
                   'DR':DR,
@@ -92,7 +97,8 @@ if __name__=="__main__":
                     'task':t,
                     'PACK':PACK,
                     'CPACK':CPACK,
-                    'DR':DR}
+                    'DR':DR,
+                    'USE_PER': USE_PER}
         
         # Run training procedure and save results.
         Total_R_e, TrainedActorObj, TrainedCriticObj, zero_store = train(**arg_dict)
@@ -126,7 +132,6 @@ if __name__=="__main__":
     #TrainedActorObj.net.save_weights('./saved_models/'+model_name+'_actor')
     #TrainedCriticObj.net.save_weights('./saved_models/'+model_name+'_critic')
     
-    
     for i, R_e in enumerate(Total_R_e_list):
         fig, ax = plt.subplots(figsize=(12,7))
         plt.plot(list(range(len(R_e))), R_e)
@@ -142,6 +147,12 @@ if __name__=="__main__":
         with open('./results/'+model_name+'.txt','a') as write_file:
             write_file.write(rew_str)
     
-    
     testing(ActorObj,env,state_dim,model_name,'new_seed')
     
+    ActorObj.setTask(0)
+    env.seed(seeds[0])
+    testing(ActorObj,env,state_dim,model_name,'first_seed')
+    
+    ActorObj.setTask(1)
+    env.seed(seeds[1])
+    testing(ActorObj,env,state_dim,model_name,'second_seed')
