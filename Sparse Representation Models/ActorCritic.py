@@ -1,10 +1,10 @@
 import os
 os.environ['HDF5_DISABLE_VERSION_CHECK']='2'
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, Concatenate, BatchNormalization, Dropout, ReLU
+from tensorflow.keras.layers import Input, Dense, Concatenate, BatchNormalization, Dropout, ReLU, Dropout, AlphaDropout
 from CustomActivations import Channelout, ChanneloutWinnerT, SELULayer
 from tensorflow_addons.layers import Maxout
-from SpecDropout import SpecDropout, SpecAlphaDropout
+# from SpecDropout import SpecDropout, SpecAlphaDropout
 import numpy as np
 import DistributionalRegularizers as DRS
 
@@ -125,10 +125,7 @@ class ActorCritic():
                 
                 self.layerSave()
             
-            
-        
-        
-    
+
     def createApproximator(self):
         
         # Layer raw output -> Channelout -> Batchnorm -> Dropout
@@ -350,9 +347,9 @@ class ActorModel(tf.keras.Model):
     
     def getDropoutLayers(self,activation,dropout_rate):
         if activation=='selu':
-            dropout_layers = [SpecAlphaDropout(dropout_rate) for i in range(self.num_layers)]
+            dropout_layers = [AlphaDropout(dropout_rate) for i in range(self.num_layers)]
         else:
-            dropout_layers = [SpecDropout(dropout_rate) for i in range(self.num_layers)]
+            dropout_layers = [Dropout(dropout_rate) for i in range(self.num_layers)]
             
         return dropout_layers
     

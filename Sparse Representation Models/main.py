@@ -9,10 +9,10 @@ from training import train, testing
 
 if __name__=="__main__":
     
-    DR = True # Turn Distributional Regularizers on and off.
+    DR = False # Turn Distributional Regularizers on and off.
     PACK = False # Turn PackNet on and off.
     CPACK = False # Turn PackNet on and off for critic net specifically.
-    USE_PER = False # Prioritized Experience Replay buffer
+    USE_PER = True # Prioritized Experience Replay buffer
 
     # Obtain pertinent environment information.
     env_names = ['Pendulum-v0']
@@ -31,9 +31,9 @@ if __name__=="__main__":
                'tau':1e-3} 
     
     actor_dict = {'layer_sizes':[480,360],
-                  'activation':'relu',    # <--- channelout
+                  'activation':'channelout',    # <--- channelout
                   'pool_size':2,
-                  'dropout_rate':0.0,  # <--- 0.3
+                  'dropout_rate':0.0,  # <--- 0.5
                   'use_bn':False,
                   'use_do':False,
                   'DR':DR,
@@ -49,9 +49,9 @@ if __name__=="__main__":
         CriticObj = ActorCritic(actor_type=False,**ac_dict, lr=1e-3, cpack=CPACK)
     else:
         critic_dict = {'layer_sizes':[480,360],
-                       'activation':'relu', # <--- channelout
+                       'activation':'channelout', # <--- channelout
                        'pool_size':2,
-                       'dropout_rate':0.0,  # <--- 0.3
+                       'dropout_rate':0.0,  # <--- 0.5
                        'use_bn':False,
                        'use_do':False,
                        'DR':DR,
@@ -120,7 +120,8 @@ if __name__=="__main__":
         '''
 
     # model_name = 'Baseline_Channelout_2seedcheetah'
-    model_name = 'expDR_ReLU_0dr_woPER_pendulum'
+    # model_name = 'expDR_ReLU_0dr_woPER_pendulum'
+    model_name = '4way_channelout_0dr_PER_pendulum'
     
     #TrainedActorObj.net.save_weights('./saved_models/'+model_name+'_actor')
     #TrainedCriticObj.net.save_weights('./saved_models/'+model_name+'_critic')
