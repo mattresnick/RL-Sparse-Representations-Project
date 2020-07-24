@@ -43,3 +43,10 @@ need to change this call to the appropriate name.
 This file contains the ActorCritic class definition and the Actor and Critic model classes themselves. Again, there's a lot to this code
 but it's heavily documented. Most of the PackNet implementation can be found here (some is also within the training file, but the bulk
 of it is here).
+
+
+
+----
+And one last thing of note: you may be wondering what's up with the os import/warning suppression going on at the top of some of the code. 
+Tensorflow was having some sort of catastrophic issue with HDF5. I was using a new, clean environment though, and could not find out the
+cause. However, whatever the warning was stemming from was not an issue for the code it seems so I surpressed it.
