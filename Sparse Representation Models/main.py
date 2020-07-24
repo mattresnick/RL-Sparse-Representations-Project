@@ -16,10 +16,10 @@ if __name__=="__main__":
     DR = False # Turn Distributional Regularizers on and off.
     PACK = False # Turn PackNet on and off.
     CPACK = False # Turn PackNet on and off for critic net specifically.
-    USE_PER = True # Prioritized Experience Replay buffer
+    USE_PER = False # Prioritized Experience Replay buffer
 
     # Obtain pertinent environment information.
-    env_names = ['Pendulum-v0', 'Pendulum-v0', 'Pendulum-v0']
+    env_names = ['Pendulum-v0']
     # env_names = ['HalfCheetahBulletEnv-v0','HalfCheetahBulletEnv-v0']
     
     # Obtain pertinent environment information. 
