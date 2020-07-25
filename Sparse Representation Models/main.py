@@ -40,7 +40,7 @@ if __name__=="__main__":
     actor_dict = {'layer_sizes':[480,360],
                   'activation':activation_name,
                   'pool_size':2,
-                  'dropout_rate':0.5,  # <--- 0.3
+                  'dropout_rate':0.5,
                   'use_bn':False,
                   'use_do':True,
                   'DR':DR,
@@ -58,7 +58,7 @@ if __name__=="__main__":
         critic_dict = {'layer_sizes':[480,360],
                   'activation':activation_name,
                   'pool_size':2,
-                  'dropout_rate':0.3,
+                  'dropout_rate':0.5,
                   'use_bn':False,
                   'use_do':False,
                   'DR':DR,
