@@ -161,9 +161,6 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
     return reward_store, ActorObj, CriticObj, zero_store
 
 
-
-
-
 # Prepare simulation environment and store pertinent information.
 env_names = ['Pendulum-v0', 'HalfCheetahBulletEnv-v0','MountainCarContinuous-v0']
 env = gym.make(env_names[0])

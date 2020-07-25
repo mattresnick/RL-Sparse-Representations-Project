@@ -124,10 +124,7 @@ class ActorCritic():
                 
                 self.layerSave()
             
-            
-        
-        
-    
+
     def createApproximator(self):
         
         # Layer raw output -> Channelout -> Batchnorm -> Dropout

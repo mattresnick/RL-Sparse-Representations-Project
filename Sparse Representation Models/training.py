@@ -5,13 +5,12 @@ import numpy as np
 import gym
 import pybullet_envs
 from ReplayBuffer import IndividualBuffers, makeOUNoise
+from PrioritizedReplayBuffer import PER
+from ActorCritic import ActorCritic
 import matplotlib.pyplot as plt
 import DistributionalRegularizers as DRS
 from math import floor
 from time import time
-
-
-
 
 
 def zero_calculus(outputs, all_nonzero_locs):
@@ -38,8 +37,6 @@ def zero_calculus(outputs, all_nonzero_locs):
     print ('Number of unique nonzero activations:',unique_nonzero_locs.shape[0])
     
     return zero_count, zero_pct, unique_nonzero_locs
-
-
 
 
 def gradientMasks(ActorCriticObj):
@@ -75,10 +72,8 @@ def gradientMasks(ActorCriticObj):
     return masks
 
 
-
-
 def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size, 
-          gamma, envmt, task, PACK, CPACK, DR):
+          gamma, envmt, task, PACK, CPACK, DR, USE_PER):
     '''
     Model training procedure.
     
@@ -116,6 +111,9 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
     loss_store = []
     nonzero_locs = np.array([])
     actor_masks, critic_masks = None, None
+
+    if USE_PER:
+        per_buffer = PER(capacity=int(5e4))
     
     # Zero gradients associated with frozen parameters by creating a boolean mask. 
     if task>0:
@@ -140,12 +138,39 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
             observation, reward, done, info = envmt.step(action[0])
             
             # Update the buffer, episode cumulative reward, and state.
-            buffer.addTransition([state, action, observation, done, reward])
+            if USE_PER:
+                per_buffer.store([state, action, observation, done, reward])
+            else:
+                buffer.addTransition([state, action, observation, done, reward])
+            
             R_e += reward
             state = np.reshape(observation, (1, state_shape))
                 
             # Sample the buffer for experiences.
-            states, actions, next_states, done_vals, rewards = buffer.sample(batch_size)
+            if USE_PER:
+                batch_idxs, minibatch = per_buffer.sample(batch_size)
+    
+                try:
+                    states = np.asarray([_[0].flatten() for _ in minibatch], dtype=np.float32)
+                    actions = np.asarray([_[1].flatten() for _ in minibatch], dtype=np.float32)
+                    next_states = np.asarray([_[2].flatten() for _ in minibatch], dtype=np.float32)
+                    done_vals = [_[3] for _ in minibatch]
+                    rewards = [_[4] for _ in minibatch]
+                except Exception as e: 
+                    print(e)
+                    for example in minibatch:
+                        if isinstance(example, int):
+                            print(example) 
+                    # print(np.asarray([_[0].flatten() for _ in minibatch], dtype=np.float32))
+                    # print('MINIBATCH:', minibatch)
+                    # print('batch[0]:', minibatch[0])
+
+            else:
+                states, actions, next_states, done_vals, rewards = buffer.sample(batch_size)
+
+            # print([_[0] for _ in minibatch] )
+            # print('STATES:', type(states))
+            # print('STATES:', states)
             
             # Train the critic network.
             with tf.GradientTape() as tape1:
@@ -171,6 +196,10 @@ def train(ActorObj, CriticObj, buffer, noise, episode_num, step_num, batch_size,
                 
                 CriticObj.opt.apply_gradients(zip(critic_grads, critic_vars))
             
+            # Update priorities in PER
+            if USE_PER:
+                abs_errors = np.abs(output_c - yi)
+                per_buffer.batch_update(batch_idxs, abs_errors)
             # Train the actor network.
             with tf.GradientTape() as tape2:
                 

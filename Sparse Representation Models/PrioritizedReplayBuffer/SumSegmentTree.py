@@ -30,6 +30,7 @@ class SumSegmentTree(object):
         self._tree = np.zeros(2 * capacity - 1)
         self._data = np.zeros(capacity, dtype=object)
         self._pointer = 0
+        self._count = 0
 
     def add(self, priority, transition):
         '''Adds the priority to the SegmentSumTree and experience to the replay buffer
@@ -45,6 +46,9 @@ class SumSegmentTree(object):
         self._data[self._pointer] = transition
         self.update(tree_index, priority)
         self._pointer += 1
+        
+        if self._count < self._capacity:
+            self._count += 1
 
         if self._pointer >= self._capacity:
             self._pointer = 0
@@ -114,3 +118,8 @@ class SumSegmentTree(object):
     def capacity(self):
         '''Get capacity'''
         return self._capacity
+
+    @property
+    def size(self):
+        '''Get size'''
+        return self._count

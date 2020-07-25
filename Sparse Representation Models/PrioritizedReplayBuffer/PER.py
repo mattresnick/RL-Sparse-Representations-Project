@@ -42,9 +42,8 @@ class PER(object):
         ----------
         experience: tuple
             An experience from the environment
-        '''
-        max_priority = np.max(
-            self._segtree.tree[-self._segtree.capacity:])
+        ''' 
+        max_priority = np.max(self._segtree.tree[-self._segtree.capacity:])
 
         if max_priority == 0:
             max_priority = self._absolute_error_upper
@@ -70,9 +69,12 @@ class PER(object):
         priority_segment = self._segtree.total_priority / batch_size
 
         for i in range(batch_size):
-            a, b = priority_segment * i, priority_segment * (i + 1)
-            value = np.random.uniform(a, b)
-            index, _, transition = self._segtree.get_leaf(value)
+            while True:
+                a, b = priority_segment * i, priority_segment * (i + 1)
+                value = np.random.uniform(a, b)
+                index, _, transition = self._segtree.get_leaf(value)
+                if (transition != 0):
+                    break
 
             batch_idxs[i] = index
             minibatch.append(transition)
